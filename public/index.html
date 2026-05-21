@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LakeMailBlock Web</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="bg-shape bg-shape-a"></div>
+  <div class="bg-shape bg-shape-b"></div>
+
+  <main class="page">
+    <section id="loginView" class="panel login-panel">
+      <h1>LakeMailBlock</h1>
+      <p class="muted">Accesso amministratore</p>
+      <form id="loginForm" autocomplete="off">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required />
+
+        <button type="submit">Entra</button>
+      </form>
+      <p id="loginError" class="error"></p>
+    </section>
+
+    <section id="appView" class="hidden">
+      <header class="topbar panel">
+        <div>
+          <h2>Dashboard SMTP Guard</h2>
+          <p class="muted" id="currentUser"></p>
+        </div>
+        <div class="topbar-actions">
+          <span id="backendHealth" class="health">Backend: ...</span>
+          <label class="inline-field">
+            Auto-refresh
+            <input id="autoRefresh" type="checkbox" checked />
+          </label>
+          <label class="inline-field">
+            Ogni (s)
+            <input id="refreshSeconds" type="number" min="3" step="1" value="10" />
+          </label>
+          <button id="manualRefreshBtn" type="button">Aggiorna</button>
+          <button id="logoutBtn" type="button" class="danger">Logout</button>
+        </div>
+      </header>
+
+      <section class="cards">
+        <article class="panel card">
+          <h3>IP bannati</h3>
+          <strong id="cardTotalBanned">0</strong>
+        </article>
+        <article class="panel card">
+          <h3>Nodi attivi</h3>
+          <strong id="cardNodeCount">0</strong>
+        </article>
+        <article class="panel card">
+          <h3>Packet OK</h3>
+          <strong id="cardPacketOk">0</strong>
+        </article>
+        <article class="panel card">
+          <h3>Packet BAN</h3>
+          <strong id="cardPacketBan">0</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h3>IP bannati per nodo</h3>
+          <input id="ipSearch" type="text" placeholder="Filtra IP o nodo" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nodo</th>
+                <th>IP bannato</th>
+              </tr>
+            </thead>
+            <tbody id="bannedBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h3>Pacchetti SMTP-GUARD</h3>
+          <div class="filters">
+            <select id="packetNodeFilter"></select>
+            <select id="packetActionFilter">
+              <option value="">Azione: tutte</option>
+              <option value="ok">ok</option>
+              <option value="ban">ban</option>
+            </select>
+            <input id="packetIpFilter" type="text" placeholder="IP src/dst" />
+            <input id="packetPortFilter" type="number" min="1" max="65535" placeholder="DPT" />
+            <input id="packetLimit" type="number" min="50" max="5000" step="50" value="500" />
+            <button id="packetFilterBtn" type="button">Filtra</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp (IT)</th>
+                <th>Nodo</th>
+                <th>Azione</th>
+                <th>SRC</th>
+                <th>DST</th>
+                <th>SPT</th>
+                <th>DPT</th>
+                <th>PROTO</th>
+                <th>IIF</th>
+                <th>Messaggio</th>
+              </tr>
+            </thead>
+            <tbody id="packetsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h3>Configurazione nft client</h3>
+          <div class="filters">
+            <select id="configNodeSelect"></select>
+            <button id="refreshConfigBtn" type="button">Refresh nodo</button>
+            <button id="loadAllConfigsBtn" type="button">Refresh tutti</button>
+          </div>
+        </div>
+
+        <div id="configMeta" class="meta-grid"></div>
+
+        <label for="configEditor">Ruleset</label>
+        <textarea id="configEditor" rows="18" placeholder="Seleziona un nodo per caricare la conf"></textarea>
+
+        <div class="row-actions">
+          <button id="pushSingleBtn" type="button">Push al nodo selezionato</button>
+          <button id="pushAllBtn" type="button" class="warn">Push a tutti i nodi</button>
+        </div>
+
+        <p id="configMessage" class="muted"></p>
+      </section>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
