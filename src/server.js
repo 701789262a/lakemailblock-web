@@ -276,6 +276,36 @@ app.post('/api/configs/push', requireAuth, async (req, res) => {
   }
 });
 
+app.post('/api/unban', requireAuth, async (req, res) => {
+  const {
+    node,
+    ip,
+    ips,
+    reason,
+  } = req.body || {};
+
+  if (typeof node !== 'string' || !node.trim()) {
+    return res.status(400).json({ detail: 'node is required' });
+  }
+  if (typeof ip !== 'string' && !Array.isArray(ips)) {
+    return res.status(400).json({ detail: 'ip or ips[] is required' });
+  }
+
+  try {
+    const client = backendClient(req.session.token);
+    const resp = await client.post('/api/unban', {
+      node: node.trim(),
+      ip,
+      ips,
+      reason: typeof reason === 'string' && reason.trim() ? reason.trim() : 'web_manual_unban',
+    });
+    return res.json(resp.data);
+  } catch (err) {
+    const nerr = normalizeError(err);
+    return res.status(nerr.status).json(nerr.detail);
+  }
+});
+
 app.get('/api/nodes', requireAuth, async (req, res) => {
   try {
     const client = backendClient(req.session.token);

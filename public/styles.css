@@ -114,6 +114,7 @@ button {
 button:hover { filter: brightness(1.05); }
 button.danger { background: #9b2226; }
 button.warn { background: var(--accent-2); color: #231300; }
+button.sm { padding: 6px 10px; font-size: 0.82rem; }
 
 .hidden { display: none !important; }
 
@@ -192,6 +193,10 @@ section.panel {
 
 .filters input[type="text"] {
   min-width: 180px;
+}
+
+#unbanIpInput {
+  min-width: 240px;
 }
 
 .table-wrap {

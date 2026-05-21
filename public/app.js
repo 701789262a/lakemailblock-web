@@ -73,12 +73,19 @@ function setConfigMessage(msg, isErr = false) {
   el.style.color = isErr ? '#9b2226' : '';
 }
 
+function setBannedMessage(msg, isErr = false) {
+  const el = $('bannedMessage');
+  el.textContent = msg || '';
+  el.style.color = isErr ? '#9b2226' : '';
+}
+
 function renderNodeSelects() {
   const nodeOptions = ['<option value="">Nodo: tutti</option>']
     .concat(state.nodes.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`))
     .join('');
 
   $('packetNodeFilter').innerHTML = nodeOptions;
+  $('unbanNodeSelect').innerHTML = nodeOptions;
 
   const cfgOptions = state.nodes
     .map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`)
@@ -125,11 +132,17 @@ function renderBannedTable() {
       if (term && !key.includes(term)) {
         continue;
       }
-      rows.push(`<tr><td>${escapeHtml(node)}</td><td>${escapeHtml(ip)}</td></tr>`);
+      rows.push(`
+        <tr>
+          <td>${escapeHtml(node)}</td>
+          <td>${escapeHtml(ip)}</td>
+          <td><button type="button" class="danger sm unban-one-btn" data-node="${escapeHtml(node)}" data-ip="${escapeHtml(ip)}">Unban</button></td>
+        </tr>
+      `);
     }
   }
 
-  tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="2">Nessun risultato</td></tr>';
+  tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="3">Nessun risultato</td></tr>';
 }
 
 function renderPacketsTable() {
@@ -201,6 +214,38 @@ function escapeHtml(str) {
 
 function stringOrDash(v) {
   return v === undefined || v === null || v === '' ? '-' : String(v);
+}
+
+function parseIpCsv(input) {
+  return String(input || '')
+    .split(/[,\s]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+async function requestUnban(node, ipList) {
+  const uniqueIps = Array.from(new Set(ipList.map((x) => String(x).trim()).filter(Boolean)));
+  if (!node) {
+    throw new Error('Nodo obbligatorio');
+  }
+  if (!uniqueIps.length) {
+    throw new Error('Nessun IP valido da sbannare');
+  }
+
+  const payload = {
+    node,
+    reason: 'web_manual_unban',
+  };
+  if (uniqueIps.length === 1) {
+    payload.ip = uniqueIps[0];
+  } else {
+    payload.ips = uniqueIps;
+  }
+
+  return api('/api/unban', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 async function refreshBackendHealth() {
@@ -344,6 +389,62 @@ $('manualRefreshBtn').addEventListener('click', () => {
 $('autoRefresh').addEventListener('change', configureAutoRefresh);
 $('refreshSeconds').addEventListener('change', configureAutoRefresh);
 $('ipSearch').addEventListener('input', renderBannedTable);
+
+$('bannedBody').addEventListener('click', async (ev) => {
+  const btn = ev.target && ev.target.closest ? ev.target.closest('.unban-one-btn') : null;
+  if (!btn) {
+    return;
+  }
+
+  const node = btn.getAttribute('data-node') || '';
+  const ip = btn.getAttribute('data-ip') || '';
+  if (!node || !ip) {
+    setBannedMessage('Dati nodo/IP mancanti', true);
+    return;
+  }
+
+  if (!window.confirm(`Accodare unban di ${ip} su ${node}?`)) {
+    return;
+  }
+
+  setBannedMessage(`Accodando unban ${ip} su ${node}...`);
+  try {
+    const resp = await requestUnban(node, [ip]);
+    setBannedMessage(`Unban accodato (${resp.requestId || '-'}) per ${ip} su ${node}. Verrà eseguito al prossimo poll client.`);
+  } catch (err) {
+    setBannedMessage(`Unban fallito: ${err.message}`, true);
+    return;
+  }
+
+  await reloadAll().catch(() => {});
+});
+
+$('unbanSubmitBtn').addEventListener('click', async () => {
+  const node = $('unbanNodeSelect').value;
+  const input = $('unbanIpInput').value;
+  const ips = parseIpCsv(input);
+
+  if (!node) {
+    setBannedMessage('Seleziona un nodo per lo sbanno', true);
+    return;
+  }
+  if (!ips.length) {
+    setBannedMessage('Inserisci almeno un IP', true);
+    return;
+  }
+
+  setBannedMessage(`Accodando unban di ${ips.length} IP su ${node}...`);
+  try {
+    const resp = await requestUnban(node, ips);
+    setBannedMessage(`Unban accodato (${resp.requestId || '-'}) su ${node}: ${resp.count || ips.length} IP.`);
+    $('unbanIpInput').value = '';
+  } catch (err) {
+    setBannedMessage(`Unban fallito: ${err.message}`, true);
+    return;
+  }
+
+  await reloadAll().catch(() => {});
+});
 
 $('packetFilterBtn').addEventListener('click', async () => {
   await loadPackets();

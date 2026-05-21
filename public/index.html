@@ -72,14 +72,21 @@
       <section class="panel">
         <div class="section-head">
           <h3>IP bannati per nodo</h3>
-          <input id="ipSearch" type="text" placeholder="Filtra IP o nodo" />
+          <div class="filters">
+            <input id="ipSearch" type="text" placeholder="Filtra IP o nodo" />
+            <select id="unbanNodeSelect"></select>
+            <input id="unbanIpInput" type="text" placeholder="IP da sbannare (csv)" />
+            <button id="unbanSubmitBtn" type="button" class="danger">Accoda unban</button>
+          </div>
         </div>
+        <p id="bannedMessage" class="muted"></p>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Nodo</th>
                 <th>IP bannato</th>
+                <th>Azione</th>
               </tr>
             </thead>
             <tbody id="bannedBody"></tbody>
