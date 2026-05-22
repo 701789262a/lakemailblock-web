@@ -111,9 +111,10 @@ function renderCards() {
   let packetRetry = 0;
   let packetBan = 0;
   for (const p of state.packets) {
-    if (p.action === 'ok') packetOk += 1;
-    if (p.action === 'retry') packetRetry += 1;
-    if (p.action === 'ban') packetBan += 1;
+    const action = normalizePacketAction(p);
+    if (action === 'ok') packetOk += 1;
+    if (action === 'retry') packetRetry += 1;
+    if (action === 'ban') packetBan += 1;
   }
 
   $('cardTotalBanned').textContent = String(totalBanned);
@@ -151,7 +152,7 @@ function renderBannedTable() {
 function renderPacketsTable() {
   const tbody = $('packetsBody');
   const rows = state.packets.map((p) => {
-    const action = String(p.action || '-');
+    const action = normalizePacketAction(p);
     const cls = action === 'ban'
       ? 'packet-ban'
       : (action === 'retry' ? 'packet-retry' : (action === 'ok' ? 'packet-ok' : ''));
@@ -223,6 +224,26 @@ function stringOrDash(v) {
   return v === undefined || v === null || v === '' ? '-' : String(v);
 }
 
+function normalizePacketAction(packet) {
+  const raw = String((packet && packet.action) || '').toLowerCase();
+  if (raw === 'ok' || raw === 'ban' || raw === 'retry') {
+    return raw;
+  }
+
+  const message = String((packet && packet.message) || '').toUpperCase();
+  if (message.includes('SMTP-GUARD RETRY')) {
+    return 'retry';
+  }
+  if (message.includes('SMTP-GUARD BAN')) {
+    return 'ban';
+  }
+  if (message.includes('SMTP-GUARD OK')) {
+    return 'ok';
+  }
+
+  return raw || 'other';
+}
+
 function sortByNewestTs(items) {
   if (!Array.isArray(items)) {
     return [];
@@ -285,20 +306,23 @@ async function loadNodes() {
 
 async function loadPackets() {
   const node = $('packetNodeFilter').value;
-  const action = $('packetActionFilter').value;
+  const actionFilter = $('packetActionFilter').value;
   const ip = $('packetIpFilter').value.trim();
   const dpt = $('packetPortFilter').value.trim();
   const limit = $('packetLimit').value.trim() || '500';
 
   const params = new URLSearchParams();
   if (node) params.set('node', node);
-  if (action) params.set('action', action);
   if (ip) params.set('ip', ip);
   if (dpt) params.set('dpt', dpt);
   params.set('limit', limit);
 
   const resp = await api(`/api/packets?${params.toString()}`);
-  state.packets = sortByNewestTs(Array.isArray(resp.packets) ? resp.packets : []);
+  let packets = Array.isArray(resp.packets) ? resp.packets : [];
+  if (actionFilter) {
+    packets = packets.filter((p) => normalizePacketAction(p) === actionFilter);
+  }
+  state.packets = sortByNewestTs(packets);
 }
 
 async function loadAllConfigs() {
