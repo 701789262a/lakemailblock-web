@@ -17,6 +17,9 @@ Frontend web per `lakemailblock` con login admin, monitoraggio pacchetti SMTP-GU
 - Editor ruleset con push:
   - singolo nodo
   - tutti i nodi
+- Controlli protezione per nodo:
+  - `Disattiva protezione` (flush tabella guard sul client)
+  - `Attiva protezione` (riapplica conf locale client)
 - Auto-refresh configurabile
 
 ## Prerequisiti
@@ -73,6 +76,7 @@ Queste endpoint sono esposte dal frontend server (proxy sicuro con sessione):
 - `GET /api/configs/:node`
 - `POST /api/configs/refresh/:node`
 - `POST /api/configs/push`
+- `POST /api/protection`
 - `GET /api/nodes`
 - `POST /api/unban`
 

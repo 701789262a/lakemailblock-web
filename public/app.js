@@ -323,6 +323,26 @@ async function requestUnban(node, ipList) {
   });
 }
 
+async function requestProtectionAction(node, action) {
+  const normalizedNode = String(node || '').trim();
+  const normalizedAction = String(action || '').trim().toLowerCase();
+  if (!normalizedNode) {
+    throw new Error('Nodo obbligatorio');
+  }
+  if (normalizedAction !== 'pause' && normalizedAction !== 'resume') {
+    throw new Error("Azione non valida: usare 'pause' o 'resume'");
+  }
+
+  return api('/api/protection', {
+    method: 'POST',
+    body: JSON.stringify({
+      node: normalizedNode,
+      action: normalizedAction,
+      reason: `web_manual_${normalizedAction}_protection`,
+    }),
+  });
+}
+
 async function refreshBackendHealth() {
   try {
     await api('/api/backend-health');
@@ -636,6 +656,44 @@ $('pushAllBtn').addEventListener('click', async () => {
     setConfigMessage(`Push globale accodato: ${resp.count || 0} nodi`);
   } catch (err) {
     setConfigMessage(`Push globale fallito: ${err.message}`, true);
+  }
+});
+
+$('pauseProtectionBtn').addEventListener('click', async () => {
+  const node = $('configNodeSelect').value;
+  if (!node) {
+    setConfigMessage('Seleziona un nodo', true);
+    return;
+  }
+  if (!window.confirm(`Disattivare la protezione su ${node}? Verrà fatto flush della tabella nft del guard.`)) {
+    return;
+  }
+
+  setConfigMessage(`Disattivazione protezione su ${node} in corso...`);
+  try {
+    const resp = await requestProtectionAction(node, 'pause');
+    setConfigMessage(`Richiesta accodata (${resp.requestId || '-'}) su ${node}. In attesa del prossimo poll client.`);
+  } catch (err) {
+    setConfigMessage(`Disattivazione fallita: ${err.message}`, true);
+  }
+});
+
+$('resumeProtectionBtn').addEventListener('click', async () => {
+  const node = $('configNodeSelect').value;
+  if (!node) {
+    setConfigMessage('Seleziona un nodo', true);
+    return;
+  }
+  if (!window.confirm(`Attivare di nuovo la protezione su ${node}? Verrà riapplicata la conf nft locale del client.`)) {
+    return;
+  }
+
+  setConfigMessage(`Riattivazione protezione su ${node} in corso...`);
+  try {
+    const resp = await requestProtectionAction(node, 'resume');
+    setConfigMessage(`Richiesta accodata (${resp.requestId || '-'}) su ${node}. In attesa del prossimo poll client.`);
+  } catch (err) {
+    setConfigMessage(`Riattivazione fallita: ${err.message}`, true);
   }
 });
 

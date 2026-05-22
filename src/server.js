@@ -306,6 +306,35 @@ app.post('/api/unban', requireAuth, async (req, res) => {
   }
 });
 
+app.post('/api/protection', requireAuth, async (req, res) => {
+  const {
+    node,
+    action,
+    reason,
+  } = req.body || {};
+
+  if (typeof node !== 'string' || !node.trim()) {
+    return res.status(400).json({ detail: 'node is required' });
+  }
+  const normalizedAction = typeof action === 'string' ? action.trim().toLowerCase() : '';
+  if (normalizedAction !== 'pause' && normalizedAction !== 'resume') {
+    return res.status(400).json({ detail: "action must be 'pause' or 'resume'" });
+  }
+
+  try {
+    const client = backendClient(req.session.token);
+    const resp = await client.post('/api/protection', {
+      node: node.trim(),
+      action: normalizedAction,
+      reason: typeof reason === 'string' && reason.trim() ? reason.trim() : `web_${normalizedAction}_protection`,
+    });
+    return res.json(resp.data);
+  } catch (err) {
+    const nerr = normalizeError(err);
+    return res.status(nerr.status).json(nerr.detail);
+  }
+});
+
 app.get('/api/nodes', requireAuth, async (req, res) => {
   try {
     const client = backendClient(req.session.token);
