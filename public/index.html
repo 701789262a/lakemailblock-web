@@ -164,7 +164,10 @@
         <div id="configMeta" class="meta-grid"></div>
 
         <label for="configEditor">Ruleset</label>
-        <textarea id="configEditor" rows="18" placeholder="Seleziona un nodo per caricare la conf"></textarea>
+        <div class="code-editor">
+          <pre id="configHighlight" aria-hidden="true"></pre>
+          <textarea id="configEditor" rows="18" placeholder="Seleziona un nodo per caricare la conf"></textarea>
+        </div>
 
         <div class="row-actions">
           <button id="pushSingleBtn" type="button">Push al nodo selezionato</button>

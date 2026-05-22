@@ -224,6 +224,7 @@ function renderConfigEditor() {
   const text = (cfg.nftablesConf || cfg.ruleset || '').trim();
 
   $('configEditor').value = text;
+  syncConfigHighlight();
   renderConfigMeta(node, entry);
 }
 
@@ -258,6 +259,29 @@ function normalizePacketAction(packet) {
   }
 
   return raw || 'other';
+}
+
+function buildConfigHighlightHtml(text) {
+  const src = String(text || '');
+  const lines = src.split('\n');
+  return lines.map((line) => {
+    const escaped = escapeHtml(line);
+    if (/^\s*#/.test(line)) {
+      return `<span class="cfg-comment">${escaped}</span>`;
+    }
+    return escaped;
+  }).join('\n');
+}
+
+function syncConfigHighlight() {
+  const editor = $('configEditor');
+  const highlight = $('configHighlight');
+  if (!editor || !highlight) {
+    return;
+  }
+  highlight.innerHTML = buildConfigHighlightHtml(editor.value);
+  highlight.scrollTop = editor.scrollTop;
+  highlight.scrollLeft = editor.scrollLeft;
 }
 
 function sortByNewestTs(items) {
@@ -506,6 +530,9 @@ $('packetFilterBtn').addEventListener('click', async () => {
   renderCards();
   renderPacketsTable();
 });
+
+$('configEditor').addEventListener('input', syncConfigHighlight);
+$('configEditor').addEventListener('scroll', syncConfigHighlight);
 
 $('packetPageSize').addEventListener('change', () => {
   const nextSize = Number($('packetPageSize').value || 20);
