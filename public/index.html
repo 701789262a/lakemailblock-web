@@ -115,7 +115,7 @@
             <button id="packetFilterBtn" type="button">Filtra</button>
           </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap packets-table-wrap">
           <table>
             <thead>
               <tr>
@@ -133,6 +133,21 @@
             </thead>
             <tbody id="packetsBody"></tbody>
           </table>
+        </div>
+        <div class="pager-row">
+          <label class="inline-field">
+            Righe/pagina
+            <select id="packetPageSize">
+              <option value="20" selected>20</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </label>
+          <button id="packetPrevBtn" type="button">Prev</button>
+          <span id="packetPageInfo" class="muted">Pagina 1/1</span>
+          <button id="packetNextBtn" type="button">Next</button>
         </div>
       </section>
 

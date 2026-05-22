@@ -206,6 +206,19 @@ section.panel {
   background: #fff;
 }
 
+.packets-table-wrap {
+  /* keep roughly 20 packet rows visible, then internal scroll */
+  max-height: calc(42px + (20 * 34px));
+  overflow-y: auto;
+}
+
+.packets-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #e9f2f5;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -221,6 +234,13 @@ th, td {
   border-bottom: 1px solid #ebeff2;
   text-align: left;
   vertical-align: top;
+}
+
+/* Keep "Nodo" columns wider and on one line */
+#bannedBody td:first-child,
+#packetsBody td:nth-child(2) {
+  min-width: 140px;
+  white-space: nowrap;
 }
 
 td {
@@ -294,6 +314,14 @@ tr.packet-retry {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.pager-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 860px) {

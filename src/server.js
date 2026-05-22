@@ -309,17 +309,23 @@ app.post('/api/unban', requireAuth, async (req, res) => {
 app.get('/api/nodes', requireAuth, async (req, res) => {
   try {
     const client = backendClient(req.session.token);
-    const [statusResp, cfgResp] = await Promise.all([
-      client.get('/api/status'),
-      client.get('/api/reverse/latest').catch(() => ({ data: { nodes: {} } })),
-    ]);
+    const resp = await client.get('/api/nodes/active');
+    const onlineNodes = Array.isArray(resp.data && resp.data.onlineNodes)
+      ? resp.data.onlineNodes
+      : [];
+    const offlineNodes = Array.isArray(resp.data && resp.data.offlineNodes)
+      ? resp.data.offlineNodes
+      : [];
 
-    const nodes = new Set();
-    Object.keys(statusResp.data || {}).forEach((n) => nodes.add(n));
-    const cfgNodes = cfgResp.data && cfgResp.data.nodes ? Object.keys(cfgResp.data.nodes) : [];
-    cfgNodes.forEach((n) => nodes.add(n));
-
-    return res.json({ status: 'ok', nodes: Array.from(nodes).sort() });
+    return res.json({
+      status: 'ok',
+      nodes: onlineNodes, // backward compatible field used by frontend selectors
+      onlineNodes,
+      offlineNodes,
+      ttlMs: resp.data && resp.data.ttlMs,
+      nowTs: resp.data && resp.data.nowTs,
+      details: resp.data && resp.data.details ? resp.data.details : {},
+    });
   } catch (err) {
     const nerr = normalizeError(err);
     return res.status(nerr.status).json(nerr.detail);

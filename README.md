@@ -7,6 +7,7 @@ Frontend web per `lakemailblock` con login admin, monitoraggio pacchetti SMTP-GU
 - Login admin (sessione web) usando `POST /api/login` del backend
 - Dashboard IP bannati per nodo
 - Unban manuale IP (singolo o multiplo) accodato via polling client
+- Selezione nodi limitata ai nodi online (last seen entro TTL lato server)
 - Tabella pacchetti con filtri (`node`, `action`, `ip`, `dpt`) e ordinamento per timestamp desc
 - Timestamp convertiti in orario Italia (`Europe/Rome`)
 - Evidenza colori:

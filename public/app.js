@@ -3,6 +3,8 @@ const state = {
   nodes: [],
   statusByNode: {},
   packets: [],
+  packetPage: 1,
+  packetPageSize: 20,
   configsByNode: {},
   selectedConfigNode: '',
   autoTimer: null,
@@ -151,7 +153,17 @@ function renderBannedTable() {
 
 function renderPacketsTable() {
   const tbody = $('packetsBody');
-  const rows = state.packets.map((p) => {
+  const total = state.packets.length;
+  const pageSize = Math.max(1, Number(state.packetPageSize || 20));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (state.packetPage > totalPages) {
+    state.packetPage = totalPages;
+  }
+  const page = Math.max(1, state.packetPage);
+  const start = (page - 1) * pageSize;
+  const pageItems = state.packets.slice(start, start + pageSize);
+
+  const rows = pageItems.map((p) => {
     const action = normalizePacketAction(p);
     const cls = action === 'ban'
       ? 'packet-ban'
@@ -177,6 +189,10 @@ function renderPacketsTable() {
   });
 
   tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="10">Nessun pacchetto</td></tr>';
+
+  $('packetPageInfo').textContent = `Pagina ${page}/${totalPages} (${total} record)`;
+  $('packetPrevBtn').disabled = page <= 1;
+  $('packetNextBtn').disabled = page >= totalPages;
 }
 
 function renderConfigMeta(node, entry) {
@@ -323,6 +339,7 @@ async function loadPackets() {
     packets = packets.filter((p) => normalizePacketAction(p) === actionFilter);
   }
   state.packets = sortByNewestTs(packets);
+  state.packetPage = 1;
 }
 
 async function loadAllConfigs() {
@@ -487,6 +504,24 @@ $('unbanSubmitBtn').addEventListener('click', async () => {
 $('packetFilterBtn').addEventListener('click', async () => {
   await loadPackets();
   renderCards();
+  renderPacketsTable();
+});
+
+$('packetPageSize').addEventListener('change', () => {
+  const nextSize = Number($('packetPageSize').value || 20);
+  state.packetPageSize = Number.isFinite(nextSize) && nextSize > 0 ? nextSize : 20;
+  state.packetPage = 1;
+  renderPacketsTable();
+});
+
+$('packetPrevBtn').addEventListener('click', () => {
+  state.packetPage = Math.max(1, state.packetPage - 1);
+  renderPacketsTable();
+});
+
+$('packetNextBtn').addEventListener('click', () => {
+  const totalPages = Math.max(1, Math.ceil(state.packets.length / Math.max(1, state.packetPageSize)));
+  state.packetPage = Math.min(totalPages, state.packetPage + 1);
   renderPacketsTable();
 });
 
