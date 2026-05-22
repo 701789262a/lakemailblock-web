@@ -351,6 +351,16 @@ tr.packet-retry {
   word-break: break-all;
 }
 
+.ruleset-warning {
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #d66b63;
+  border-radius: 10px;
+  background: #fde8e6;
+  color: #a32017;
+  font-weight: 700;
+}
+
 .row-actions {
   margin-top: 10px;
   display: flex;
