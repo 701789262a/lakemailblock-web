@@ -108,9 +108,11 @@ function renderCards() {
   const totalBanned = Object.values(byNode).reduce((acc, ips) => acc + (Array.isArray(ips) ? ips.length : 0), 0);
 
   let packetOk = 0;
+  let packetRetry = 0;
   let packetBan = 0;
   for (const p of state.packets) {
     if (p.action === 'ok') packetOk += 1;
+    if (p.action === 'retry') packetRetry += 1;
     if (p.action === 'ban') packetBan += 1;
   }
 
@@ -118,6 +120,7 @@ function renderCards() {
   $('cardNodeCount').textContent = String(state.nodes.length);
   $('cardPacketOk').textContent = String(packetOk);
   $('cardPacketBan').textContent = String(packetBan);
+  $('cardPacketRetry').textContent = String(packetRetry);
 }
 
 function renderBannedTable() {
@@ -149,8 +152,12 @@ function renderPacketsTable() {
   const tbody = $('packetsBody');
   const rows = state.packets.map((p) => {
     const action = String(p.action || '-');
-    const cls = action === 'ban' ? 'packet-ban' : (action === 'ok' ? 'packet-ok' : '');
-    const badgeCls = action === 'ban' ? 'ban' : (action === 'ok' ? 'ok' : '');
+    const cls = action === 'ban'
+      ? 'packet-ban'
+      : (action === 'retry' ? 'packet-retry' : (action === 'ok' ? 'packet-ok' : ''));
+    const badgeCls = action === 'ban'
+      ? 'ban'
+      : (action === 'retry' ? 'retry' : (action === 'ok' ? 'ok' : ''));
 
     return `
       <tr class="${cls}">
@@ -214,6 +221,13 @@ function escapeHtml(str) {
 
 function stringOrDash(v) {
   return v === undefined || v === null || v === '' ? '-' : String(v);
+}
+
+function sortByNewestTs(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  return [...items].sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0));
 }
 
 function parseIpCsv(input) {
@@ -284,7 +298,7 @@ async function loadPackets() {
   params.set('limit', limit);
 
   const resp = await api(`/api/packets?${params.toString()}`);
-  state.packets = Array.isArray(resp.packets) ? resp.packets : [];
+  state.packets = sortByNewestTs(Array.isArray(resp.packets) ? resp.packets : []);
 }
 
 async function loadAllConfigs() {

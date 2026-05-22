@@ -236,6 +236,10 @@ tr.packet-ban {
   background: #fdecea;
 }
 
+tr.packet-retry {
+  background: #fff7da;
+}
+
 .badge {
   display: inline-block;
   padding: 2px 7px;
@@ -253,6 +257,11 @@ tr.packet-ban {
 .badge.ban {
   background: rgba(181, 58, 45, 0.15);
   color: #912a20;
+}
+
+.badge.retry {
+  background: rgba(238, 155, 0, 0.2);
+  color: #7a5200;
 }
 
 .meta-grid {
