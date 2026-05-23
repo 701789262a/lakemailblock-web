@@ -29,7 +29,10 @@ function fmtTs(ts) {
   if (!Number.isFinite(v) || v <= 0) {
     return '-';
   }
-  return fmtIt.format(new Date(v * 1000));
+  const epochMs = Math.abs(v) >= 1e12 ? Math.floor(v) : Math.round(v * 1000);
+  const dt = new Date(epochMs);
+  const millis = String(dt.getMilliseconds()).padStart(3, '0');
+  return `${fmtIt.format(dt)}.${millis}`;
 }
 
 async function api(path, opts = {}) {
@@ -364,7 +367,8 @@ async function loadNodes() {
   state.nodes = Array.isArray(data.nodes) ? data.nodes : [];
 }
 
-async function loadPackets() {
+async function loadPackets(options = {}) {
+  const { resetPage = false } = options;
   const node = $('packetNodeFilter').value;
   const actionFilter = $('packetActionFilter').value;
   const ip = $('packetIpFilter').value.trim();
@@ -383,7 +387,9 @@ async function loadPackets() {
     packets = packets.filter((p) => normalizePacketAction(p) === actionFilter);
   }
   state.packets = sortByNewestTs(packets);
-  state.packetPage = 1;
+  if (resetPage) {
+    state.packetPage = 1;
+  }
 }
 
 async function loadAllConfigs() {
@@ -402,7 +408,7 @@ async function reloadAll() {
   await Promise.all([
     loadNodes(),
     loadStatus(),
-    loadPackets(),
+    loadPackets({ resetPage: false }),
     loadAllConfigs(),
     refreshBackendHealth(),
   ]);
@@ -546,7 +552,7 @@ $('unbanSubmitBtn').addEventListener('click', async () => {
 });
 
 $('packetFilterBtn').addEventListener('click', async () => {
-  await loadPackets();
+  await loadPackets({ resetPage: true });
   renderCards();
   renderPacketsTable();
 });
