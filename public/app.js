@@ -7,6 +7,8 @@ const state = {
   packetPageSize: 20,
   configsByNode: {},
   selectedConfigNode: '',
+  configEditorDirty: false,
+  configEditorDirtyNode: '',
   autoTimer: null,
 };
 
@@ -220,13 +222,40 @@ function renderConfigMeta(node, entry) {
     .join('');
 }
 
-function renderConfigEditor() {
-  const node = state.selectedConfigNode;
+function currentNodeRulesetText(node) {
   const entry = node ? state.configsByNode[node] : null;
   const cfg = entry && entry.config ? entry.config : {};
-  const text = (cfg.nftablesConf || cfg.ruleset || '').trim();
+  return String((cfg.nftablesConf || cfg.ruleset || '').trim());
+}
+
+function isConfigEditorLocked(node) {
+  return state.configEditorDirty && node && state.configEditorDirtyNode === node;
+}
+
+function updateConfigDirtyState() {
+  const editor = $('configEditor');
+  const node = state.selectedConfigNode;
+  const current = editor ? String(editor.value || '') : '';
+  const base = currentNodeRulesetText(node);
+
+  state.configEditorDirty = Boolean(node) && current !== base;
+  state.configEditorDirtyNode = state.configEditorDirty ? node : '';
+}
+
+function renderConfigEditor(options = {}) {
+  const force = Boolean(options.force);
+  const node = state.selectedConfigNode;
+  const entry = node ? state.configsByNode[node] : null;
+  const text = currentNodeRulesetText(node);
+
+  if (!force && isConfigEditorLocked(node)) {
+    renderConfigMeta(node, entry);
+    return;
+  }
 
   $('configEditor').value = text;
+  state.configEditorDirty = false;
+  state.configEditorDirtyNode = '';
   syncConfigHighlight();
   renderConfigMeta(node, entry);
 }
@@ -558,6 +587,7 @@ $('packetFilterBtn').addEventListener('click', async () => {
 });
 
 $('configEditor').addEventListener('input', syncConfigHighlight);
+$('configEditor').addEventListener('input', updateConfigDirtyState);
 $('configEditor').addEventListener('scroll', syncConfigHighlight);
 
 $('packetPageSize').addEventListener('change', () => {
@@ -587,7 +617,7 @@ $('configNodeSelect').addEventListener('change', async (ev) => {
       // keep old if request fails
     }
   }
-  renderConfigEditor();
+  renderConfigEditor({ force: true });
 });
 
 $('refreshConfigBtn').addEventListener('click', async () => {
@@ -601,7 +631,7 @@ $('refreshConfigBtn').addEventListener('click', async () => {
   try {
     await api(`/api/configs/refresh/${encodeURIComponent(node)}`, { method: 'POST' });
     await loadOneConfig(node);
-    renderConfigEditor();
+    renderConfigEditor({ force: true });
     setConfigMessage(`Config aggiornata da ${node}`);
   } catch (err) {
     setConfigMessage(`Refresh fallito: ${err.message}`, true);
@@ -612,7 +642,7 @@ $('loadAllConfigsBtn').addEventListener('click', async () => {
   setConfigMessage('Refresh config di tutti i nodi in corso...');
   try {
     await loadAllConfigs();
-    renderConfigEditor();
+    renderConfigEditor({ force: true });
     setConfigMessage('Config di tutti i nodi aggiornate');
   } catch (err) {
     setConfigMessage(`Refresh globale fallito: ${err.message}`, true);
